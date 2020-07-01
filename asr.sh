@@ -10,10 +10,10 @@ stop_stage=4
 
 help_message=$(cat <<EOF
 Usage:
-    $0 <image_name> <container_name> (optional)(<record audio name> <select recog audio paths>)
+    $0 <image_name> <container_name> (optional)(<record audio name> <select recog audio path>)
 
 Example:
-    $0 espnet testcontainer (optional)example (test1.wav test2.m4a example.wav)
+    $0 espnet testcontainer (optional)example example.wav
 EOF
 )
 
@@ -50,8 +50,8 @@ if [ ${start_stage} -le 2 ] && [ ${stop_stage} -ge 2 ]; then
         echo '----------Recording audio data----------'
         local_audio_files=$(ls ./input_audio)
         
-        if ! [[ -z $(echo ${local_audio_files} | grep ${output_audioname}) ]]; then
-            while ! [[ -z $(echo ${local_audio_files} | grep ${output_audioname}) ]]
+        if ! [[ -z $(echo ${local_audio_files} | grep ${output_audioname}.wav) ]]; then
+            while ! [[ -z $(echo ${local_audio_files} | grep ${output_audioname}.wav) ]]
             do
                 echo 'This audio file already exists!'
                 echo 'Please type input audio name: '
@@ -63,7 +63,7 @@ if [ ${start_stage} -le 2 ] && [ ${stop_stage} -ge 2 ]; then
         fi
 
         sudo python3 ./utils/record.py ${output_audioname}
-        docker cp $(pwd)/input_audio/${output_audioname}.wav ${container_name}:/input_audio
+        docker cp $(pwd)/input_audio/${output_audioname}.wav ${container_name}:/input_audio/
     fi
 fi
 
@@ -71,7 +71,7 @@ if [ ${start_stage} -le 3 ] && [ ${stop_stage} -ge 3 ]; then
     echo '----------Preprocess audio data----------'
     docker exec ${container_name} mkdir wav
 
-    if [ -z ${audio_files} ]; then
+    if [ $# -lt 4 ]; then
         echo 'Select all audio files in /input_audio'
         audio_files=$(docker exec ${container_name} ls /input_audio)
     fi
